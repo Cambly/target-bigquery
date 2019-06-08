@@ -52,7 +52,7 @@ def clear_dict_hook(items):
     return {k: v if v is not None else '' for k, v in items}
 
 def define_schema(field, name):
-    schema_name = name
+    schema_name = '_' + name.replace('-', '_') if name[0].isdigit() else name.replace('-', '_')
     schema_type = "STRING"
     schema_mode = "NULLABLE"
     schema_description = None
@@ -73,16 +73,25 @@ def define_schema(field, name):
         schema_type = field['type'][1]
     else:
         schema_type = field['type']
+
     if schema_type == "object":
         schema_type = "RECORD"
         schema_fields = tuple(build_schema(field))
+
     if schema_type == "array":
         schema_type = field.get('items').get('type')
         schema_mode = "REPEATED"
-        if schema_type[1] == "object":
-          schema_type = "RECORD"
-          schema_fields = tuple(build_schema(field.get('items')))
+        if isinstance(schema_type, list):
+            schema_type = schema_type[1]
 
+        if schema_type == "array" or schema_type == "object":
+            # schema_type = "STRUCT"
+            schema_type = "STRING"
+            schema_mode = "NULLABLE"
+            # schema_fields = tuple(build_schema(field.get('items'), True))
+        # elif schema_type == "object":
+        #     schema_type = "RECORD"
+        #     schema_fields = tuple(build_schema(field.get('items')))
 
     if schema_type == "string":
         if "format" in field:
@@ -94,11 +103,19 @@ def define_schema(field, name):
 
     return (schema_name, schema_type, schema_mode, schema_description, schema_fields)
 
-def build_schema(schema):
+def build_schema(schema, struct = False):
     SCHEMA = []
-    for key in schema['properties'].keys():
-        schema_name, schema_type, schema_mode, schema_description, schema_fields = define_schema(schema['properties'][key], key)
+    if struct:
+        schema_name = None
+        schema_type = schema['type'][1] if isinstance(schema['type'], list) else schema['type']
+        schema_mode = "NULLABLE"
+        schema_description = None
+        schema_fields = tuple(define_schema(schema["items"], None))
         SCHEMA.append(SchemaField(schema_name, schema_type, schema_mode, schema_description, schema_fields))
+    else:
+        for key in schema['properties'].keys():
+            schema_name, schema_type, schema_mode, schema_description, schema_fields = define_schema(schema['properties'][key], key)
+            SCHEMA.append(SchemaField(schema_name, schema_type, schema_mode, schema_description, schema_fields))
 
     return SCHEMA
 
@@ -209,8 +226,11 @@ def persist_lines_stream(project_id, dataset_id, lines=None, validate_records=Tr
         pass
 
     for line in lines:
+        parsed = json.loads(line)
+        parsed["time_extracted"] = None
+        encoded = json.dumps(parsed)
         try:
-            msg = singer.parse_message(line)
+            msg = singer.parse_message(encoded)
         except json.decoder.JSONDecodeError:
             logger.error("Unable to parse:\n{}".format(line))
             raise
