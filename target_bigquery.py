@@ -84,14 +84,11 @@ def define_schema(field, name):
         if isinstance(schema_type, list):
             schema_type = schema_type[1]
 
+    #TODO (Charlie):
+    # Refactor to allow for deep nesting of arrays and objects
         if schema_type == "array" or schema_type == "object":
-            # schema_type = "STRUCT"
             schema_type = "STRING"
             schema_mode = "NULLABLE"
-            # schema_fields = tuple(build_schema(field.get('items'), True))
-        # elif schema_type == "object":
-        #     schema_type = "RECORD"
-        #     schema_fields = tuple(build_schema(field.get('items')))
 
     if schema_type == "string":
         if "format" in field:
