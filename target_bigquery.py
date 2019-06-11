@@ -85,14 +85,14 @@ def define_schema(field, name):
             schema_type = schema_type[1]
 
     #TODO (Charlie):
-    # Refactor to allow for deep nesting of arrays and objects
+    #Refactor to allow for deep nesting of arrays and objects
         if schema_type == "array" or schema_type == "object":
             schema_type = "STRING"
             schema_mode = "NULLABLE"
 
     if schema_type == "string":
         if "format" in field:
-            if field['format'] == "date-time":
+            if field['format'] == "datetime":
                 schema_type = "timestamp"
 
     if schema_type == 'number':
