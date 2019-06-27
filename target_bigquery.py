@@ -269,11 +269,11 @@ def persist_lines_stream(project_id, dataset_id, lines=None, validate_records=Tr
         else:
             raise Exception("Unrecognized message {}".format(msg))
 
-    for table in errors.keys():
-        if not errors[table]:
-            print('Loaded {} row(s) into {}:{}'.format(rows[table], dataset_id, table), tables[table].path)
-        else:
-            print('Errors:', errors[table], sep=" ")
+    # for table in errors.keys():
+    #     if not errors[table]:
+    #         print('Loaded {} row(s) into {}:{}'.format(rows[table], dataset_id, table), tables[table].path)
+    #     else:
+    #         print('Errors:', errors[table], sep=" ")
 
     return state
 
